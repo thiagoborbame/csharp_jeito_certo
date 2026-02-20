@@ -1,16 +1,18 @@
-using GymErp.Domain.Financial.Features.ProcessCharging;
-using GymErp.Domain.Subscriptions.Features.Enrollments.Domain;
+using GymErp.Domain.Financial.Features.Payments.Application.ProcessCharging;
+using GymErp.Domain.Financial.Features.Payments.Domain;
+using GymErp.Domain.Financial.Features.Payments.Services;
+using GymErp.Domain.Financial.Infrastructure.Gateways;
+using GymErp.Domain.Financial.Infrastructure.Persistencia;
 using GymErp.Domain.Subscriptions.Features.Enrollments.Application.AddNewEnrollment;
+using GymErp.Domain.Subscriptions.Features.Enrollments.Domain;
 using GymErp.Domain.Subscriptions.Infrastructure;
 using GymErp.IntegrationTests.Infrastructure;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Logging.Abstractions;
 using Silverback.Messaging.Broker;
-using Silverback.Testing;
 using Xunit;
 using FluentAssertions;
-using FinancialHandler = GymErp.Domain.Financial.Features.ProcessCharging.Handler;
+using FinancialHandler = GymErp.Domain.Financial.Features.Payments.Application.ProcessCharging.Handler;
 using SubscriptionsHandler = GymErp.Domain.Subscriptions.Features.Enrollments.Application.AddNewEnrollment.Handler;
 
 namespace GymErp.IntegrationTests.Financial.ProcessCharging;
@@ -24,11 +26,18 @@ public class MessagingFlowTests : IntegrationTestBase
     protected override async Task SetupDatabase()
     {
         await base.SetupDatabase();
-        
-        // Registrar os serviços do Financial
-        var financialHandler = new FinancialHandler(new NullLogger<FinancialHandler>());
-        
-        // Registrar o handler do Subscriptions
+
+        var financialOptions = new DbContextOptionsBuilder<FinancialDbContext>()
+            .UseNpgsql(_postgresContainer.GetConnectionString())
+            .Options;
+        var financialDbContext = new FinancialDbContext(financialOptions, _serviceBus);
+        await financialDbContext.Database.EnsureCreatedAsync();
+
+        var paymentRepository = new PaymentRepository(financialDbContext);
+        var financialUnitOfWork = new FinancialUnitOfWork(financialDbContext);
+        var chargeSemanticService = new PaymentChargeSemanticService(new FakePaymentProviderClient());
+        var financialHandler = new FinancialHandler(paymentRepository, financialUnitOfWork, chargeSemanticService);
+
         var dbContextAccessor = new EfDbContextAccessor<SubscriptionsDbContext>(_dbContext);
         var enrollmentRepository = new EnrollmentRepository(dbContextAccessor);
         var unitOfWork = new UnitOfWork(_dbContext);
@@ -37,10 +46,10 @@ public class MessagingFlowTests : IntegrationTestBase
             unitOfWork,
             CancellationToken.None
         );
-        
+
         _serviceProvider.GetService<IServiceCollection>()?.AddSingleton(financialHandler);
         _serviceProvider.GetService<IServiceCollection>()?.AddSingleton(subscriptionsHandler);
-        
+
         _financialHandler = financialHandler;
         _subscriptionsHandler = subscriptionsHandler;
         _broker = _serviceProvider.GetRequiredService<IBroker>();
@@ -74,18 +83,16 @@ public class MessagingFlowTests : IntegrationTestBase
     }
 
     [Fact]
-    public async Task FinancialHandler_ShouldProcessEnrollmentCreatedEvent_WhenEventReceived()
+    public async Task FinancialHandler_ShouldProcessProcessChargingCommand_WhenCommandIsValid()
     {
         // Arrange
         var enrollmentId = Guid.NewGuid();
-        var enrollmentCreatedEvent = new EnrollmentCreatedEvent(enrollmentId);
+        var command = new ProcessChargingCommand(enrollmentId, 100m, "BRL");
 
         // Act
-        await _financialHandler.HandleAsync(enrollmentCreatedEvent, CancellationToken.None);
+        var result = await _financialHandler.HandleAsync(command, CancellationToken.None);
 
         // Assert
-        // Como o handler apenas faz log "Hello World", não temos muito o que verificar
-        // Mas podemos garantir que não houve exceções
-        true.Should().BeTrue();
+        result.IsSuccess.Should().BeTrue();
     }
 }

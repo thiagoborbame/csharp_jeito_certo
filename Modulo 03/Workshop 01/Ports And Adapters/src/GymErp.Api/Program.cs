@@ -1,3 +1,4 @@
+using GymErp.Api.Consumers;
 using GymErp.Application;
 using GymErp.Infrastructure.Persistence;
 using GymErp.Infrastructure.ServiceBus;
@@ -29,6 +30,7 @@ builder.Services.AddCors(options =>
 builder.Services.AddHealthChecks();
 builder.Services.AddApplication();
 builder.Services.AddEventPublisher();
+builder.Services.AddScoped<EnrollmentCanceledEventConsumer>();
 builder.Services.AddPersistence(builder.Configuration);
 
 var app = builder.Build();

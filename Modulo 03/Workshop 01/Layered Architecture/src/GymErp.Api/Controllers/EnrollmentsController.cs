@@ -7,28 +7,18 @@ namespace GymErp.Api.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-public class EnrollmentsController : ControllerBase
+public class EnrollmentsController(
+    IAddNewEnrollmentService addNewEnrollmentService,
+    ICancelEnrollmentService cancelEnrollmentService,
+    ISuspendEnrollmentService suspendEnrollmentService)
+    : ControllerBase
 {
-    private readonly IAddNewEnrollmentService _addNewEnrollmentService;
-    private readonly ICancelEnrollmentService _cancelEnrollmentService;
-    private readonly ISuspendEnrollmentService _suspendEnrollmentService;
-
-    public EnrollmentsController(
-        IAddNewEnrollmentService addNewEnrollmentService,
-        ICancelEnrollmentService cancelEnrollmentService,
-        ISuspendEnrollmentService suspendEnrollmentService)
-    {
-        _addNewEnrollmentService = addNewEnrollmentService;
-        _cancelEnrollmentService = cancelEnrollmentService;
-        _suspendEnrollmentService = suspendEnrollmentService;
-    }
-
     [HttpPost]
     [ProducesResponseType(typeof(Guid), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> AddNewEnrollment([FromBody] AddNewEnrollmentRequest request, CancellationToken cancellationToken)
     {
-        var result = await _addNewEnrollmentService.HandleAsync(request, cancellationToken);
+        var result = await addNewEnrollmentService.HandleAsync(request, cancellationToken);
         if (result.IsFailure)
             return BadRequest(new { error = result.Error });
         return Ok(result.Value);
@@ -42,7 +32,7 @@ public class EnrollmentsController : ControllerBase
         var req = request ?? new CancelEnrollmentRequest { EnrollmentId = enrollmentId };
         if (req.EnrollmentId != enrollmentId)
             req = req with { EnrollmentId = enrollmentId };
-        var result = await _cancelEnrollmentService.HandleAsync(req, cancellationToken);
+        var result = await cancelEnrollmentService.HandleAsync(req, cancellationToken);
         if (result.IsFailure)
             return BadRequest(new { error = result.Error });
         return Ok(result.Value);
@@ -55,7 +45,7 @@ public class EnrollmentsController : ControllerBase
     {
         if (command.EnrollmentId != enrollmentId)
             command = new SuspendEnrollmentCommand(enrollmentId, command.SuspensionStartDate, command.SuspensionEndDate);
-        var result = await _suspendEnrollmentService.HandleAsync(command, cancellationToken);
+        var result = await suspendEnrollmentService.HandleAsync(command, cancellationToken);
         if (result.IsFailure)
             return BadRequest(new { error = result.Error });
         return Ok(result.Value);

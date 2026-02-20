@@ -1,14 +1,15 @@
-using GymErp.Domain.Financial.Features.ProcessCharging;
-using GymErp.Domain.Subscriptions.Features.Enrollments.Domain;
+using GymErp.Domain.Financial.Features.Payments.Application.ProcessCharging;
+using GymErp.Domain.Financial.Features.Payments.Domain;
+using GymErp.Domain.Financial.Features.Payments.Services;
+using GymErp.Domain.Financial.Infrastructure.Gateways;
+using GymErp.Domain.Financial.Infrastructure.Persistencia;
 using GymErp.IntegrationTests.Infrastructure;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Logging.Abstractions;
 using Silverback.Messaging.Broker;
-using Silverback.Testing;
 using Xunit;
 using FluentAssertions;
-using FinancialHandler = GymErp.Domain.Financial.Features.ProcessCharging.Handler;
+using FinancialHandler = GymErp.Domain.Financial.Features.Payments.Application.ProcessCharging.Handler;
 
 namespace GymErp.IntegrationTests.Financial.ProcessCharging;
 
@@ -20,29 +21,35 @@ public class HandlerTests : IntegrationTestBase
     protected override async Task SetupDatabase()
     {
         await base.SetupDatabase();
-        
-        // Registrar os serviços do Financial
-        var handler = new FinancialHandler(new NullLogger<FinancialHandler>());
-        
+
+        var financialOptions = new DbContextOptionsBuilder<FinancialDbContext>()
+            .UseNpgsql(_postgresContainer.GetConnectionString())
+            .Options;
+        var financialDbContext = new FinancialDbContext(financialOptions, _serviceBus);
+        await financialDbContext.Database.EnsureCreatedAsync();
+
+        var paymentRepository = new PaymentRepository(financialDbContext);
+        var unitOfWork = new FinancialUnitOfWork(financialDbContext);
+        var chargeSemanticService = new PaymentChargeSemanticService(new FakePaymentProviderClient());
+        var handler = new FinancialHandler(paymentRepository, unitOfWork, chargeSemanticService);
+
         _serviceProvider.GetService<IServiceCollection>()?.AddSingleton(handler);
-        
+
         _handler = handler;
         _broker = _serviceProvider.GetRequiredService<IBroker>();
     }
 
     [Fact]
-    public async Task HandleAsync_ShouldLogHelloWorld_WhenProcessingEnrollment()
+    public async Task HandleAsync_ShouldProcessCharge_WhenProcessChargingCommandIsValid()
     {
         // Arrange
         var enrollmentId = Guid.NewGuid();
-        var enrollmentCreatedEvent = new EnrollmentCreatedEvent(enrollmentId);
+        var command = new ProcessChargingCommand(enrollmentId, 100m, "BRL");
 
         // Act
-        await _handler.HandleAsync(enrollmentCreatedEvent, CancellationToken.None);
+        var result = await _handler.HandleAsync(command, CancellationToken.None);
 
         // Assert
-        // Como o handler apenas faz log, não temos muito o que verificar
-        // Mas podemos garantir que não houve exceções
-        true.Should().BeTrue(); // Placeholder para validação futura
+        result.IsSuccess.Should().BeTrue();
     }
 }

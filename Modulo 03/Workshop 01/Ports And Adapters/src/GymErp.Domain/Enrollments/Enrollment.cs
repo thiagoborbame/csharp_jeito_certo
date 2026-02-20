@@ -4,6 +4,7 @@ using GymErp.Domain.Enrollments.States;
 
 namespace GymErp.Domain.Enrollments;
 
+
 public sealed class Enrollment : Aggregate
 {
     private Enrollment() { }
