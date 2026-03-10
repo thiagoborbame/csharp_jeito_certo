@@ -1,5 +1,5 @@
 ---
-name: adr-architecture-decision-records
+name: create-adr
 description: Gerencia o ciclo de vida dos ADRs (Architecture Decision Records) no repositório. Executa arqueologia de software, análise de gaps, proposta de decisões e escrita de ADRs em docs/architecture-decision-records. Use quando o usuário pedir para criar ADRs, documentar decisões de arquitetura, analisar decisões implícitas do projeto ou gerenciar a pasta de architecture-decision-records.
 ---
 
