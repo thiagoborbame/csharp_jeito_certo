@@ -11,8 +11,4 @@
         <ProjectReference Include="..\GymErp.CrossCutting\GymErp.CrossCutting.csproj" />
     </ItemGroup>
 
-    <ItemGroup>
-      <Folder Include="Entities\" />
-    </ItemGroup>
-
 </Project>
