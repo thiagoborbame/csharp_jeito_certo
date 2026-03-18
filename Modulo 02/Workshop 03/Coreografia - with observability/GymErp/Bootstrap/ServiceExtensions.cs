@@ -145,6 +145,7 @@ internal static class ServicesExtensions
                     .SetSampler(new AlwaysOnSampler())
                     .AddSource(serviceName)
                     .AddSource("Silverback.Integration.Produce")
+                    .AddSource("Silverback.Integration.Consume")
                     .AddAspNetCoreInstrumentation(opts =>
                     {
                         opts.EnrichWithHttpRequest = (activity, httpRequest) =>

@@ -4,10 +4,14 @@ using GymErp.Domain.Subscriptions.Aggreates.Enrollments;
 
 namespace GymErp.Domain.Subscriptions.Features.AddNewEnrollment;
 
-public class Handler(EnrollmentRepository repository, IUnitOfWork unitOfWork, CancellationToken cancellationToken)
+public class Handler(EnrollmentRepository repository, IUnitOfWork unitOfWork)
 {
     public async Task<Result<Guid>> HandleAsync(Request request)
     {
+        // FastEndpoints fornece o CancellationToken no endpoint, mas aqui o handler é resolvido via DI.
+        // Para evitar falhas de resolução no Autofac, usamos CancellationToken.None neste nível.
+        var cancellationToken = CancellationToken.None;
+
         var enrollmentResult = Enrollment.Create(
             request.Name,
             request.Email,

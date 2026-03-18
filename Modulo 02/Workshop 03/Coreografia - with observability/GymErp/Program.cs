@@ -31,6 +31,7 @@ try
     builder.Services
         .AddCors()
         .AddFastEndpoints()
+        .AddAuthorization()
         .AddLogs(builder.Configuration)
         .AddTelemetry(serviceName, serviceVersion, builder.Configuration)
         .SwaggerDocument(c =>
@@ -43,6 +44,8 @@ try
         .AddCaching()
         .Configure<ServicesSettings>(builder.Configuration.GetSection("ServicesSettings"))
         .AddMessageBroker(builder.Configuration);
+
+    builder.Services.AddAuthentication();
     
     builder.Host.ConfigureContainer<ContainerBuilder>(builder =>
     {

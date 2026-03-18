@@ -1,6 +1,7 @@
 using GymErp.Common;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using System.Runtime.CompilerServices;
 
 namespace GymErp.Bootstrap;
 
@@ -13,8 +14,9 @@ internal static class MessageBrokerExtensions
     public static IServiceCollection AddMessageBroker(this IServiceCollection services, IConfiguration configuration)
     {
         // Ensure both broker extensions are loaded so their static constructors run and they register in the registry.
-        _ = typeof(SilverbackServiceExtensions);
-        _ = typeof(MassTransitServiceExtensions);
+        // `typeof(T)` não dispara static ctor; aqui forçamos explicitamente.
+        RuntimeHelpers.RunClassConstructor(typeof(SilverbackServiceExtensions).TypeHandle);
+        RuntimeHelpers.RunClassConstructor(typeof(MassTransitServiceExtensions).TypeHandle);
 
         var brokerName = configuration["MessageBroker"] ?? "Silverback";
         MessageBrokerRegistry.Invoke(brokerName, services, configuration);
