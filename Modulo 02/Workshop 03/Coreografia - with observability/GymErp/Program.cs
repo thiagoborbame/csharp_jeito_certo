@@ -6,6 +6,7 @@ using FastEndpoints.Swagger;
 using GymErp.Bootstrap;
 using GymErp.Common.Infrastructure;
 using GymErp.Common.Settings;
+using GymErp.Domain.Acesso.Infrastructure;
 using GymErp.Domain.Financial.Infrastructure;
 using GymErp.Domain.Subscriptions.Infrastructure;
 using GymErp.Tenant;
@@ -50,6 +51,7 @@ try
     builder.Host.ConfigureContainer<ContainerBuilder>(builder =>
     {
         builder.RegisterModule(new CommonModule());
+        builder.RegisterModule(new AcessoModule());
         builder.RegisterModule(new SubscriptionsModule());
         builder.RegisterModule(new FinancialModule());
     });

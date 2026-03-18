@@ -2,12 +2,18 @@ using Confluent.Kafka;
 using GymErp.Common;
 using GymErp.Common.Infrastructure;
 using GymErp.Common.Kafka;
+using AcessoEnrollmentCreatedEventConsumer =
+    GymErp.Domain.Acesso.Features.AddPermissionToGreenList.Consumers.EnrollmentCreatedEventConsumer;
 using GymErp.Domain.Financial.Features.ProcessCharging;
 using GymErp.Domain.Financial.Features.ProcessCharging.Consumers;
+using FinancialEnrollmentCreatedEventConsumer =
+    GymErp.Domain.Financial.Features.ProcessCharging.Consumers.EnrollmentCreatedEventConsumer;
 using GymErp.Domain.Subscriptions.Aggreates.Enrollments;
 using GymErp.Domain.Subscriptions.Features.CancelEnrollment;
 using GymErp.Domain.Subscriptions.Features.CancelEnrollment.Consumers;
 using Silverback.Messaging.Configuration;
+using Silverback.Messaging.Subscribers;
+using Silverback.Messaging.Subscribers.Subscriptions;
 
 namespace GymErp.Bootstrap;
 
@@ -64,6 +70,14 @@ internal static class SilverbackServiceExtensions
                         config.AutoOffsetReset = AutoOffsetReset.Latest;
                     })
                     .DisableMessageValidation())
+                .AddInbound<EnrollmentCreatedEvent>(endpoint => endpoint
+                    .ConsumeFrom("enrollment-events")
+                    .Configure(config =>
+                    {
+                        config.GroupId = "acesso-module";
+                        config.AutoOffsetReset = AutoOffsetReset.Latest;
+                    })
+                    .DisableMessageValidation())
                 .AddInbound<CancelEnrollmentCommand>(endpoint => endpoint
                     .ConsumeFrom("cancel-enrollment-commands")
                     .Configure(config =>
@@ -72,7 +86,22 @@ internal static class SilverbackServiceExtensions
                         config.AutoOffsetReset = AutoOffsetReset.Latest;
                     })
                     .DisableMessageValidation()))
-            .AddScopedSubscriber<EnrollmentCreatedEventConsumer>()
+            .AddScopedSubscriber<FinancialEnrollmentCreatedEventConsumer>(
+                new TypeSubscriptionOptions
+                {
+                    Filters = new IMessageFilter[]
+                    {
+                        new KafkaGroupIdFilterAttribute(new[] { "financial-module" })
+                    }
+                })
+            .AddScopedSubscriber<AcessoEnrollmentCreatedEventConsumer>(
+                new TypeSubscriptionOptions
+                {
+                    Filters = new IMessageFilter[]
+                    {
+                        new KafkaGroupIdFilterAttribute(new[] { "acesso-module" })
+                    }
+                })
             .AddScopedSubscriber<CancelEnrollmentCommandSilverbackConsumer>();
 
         return services;

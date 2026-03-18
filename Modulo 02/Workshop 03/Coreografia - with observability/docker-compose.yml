@@ -69,14 +69,12 @@ services:
         kafka-topics --bootstrap-server kafka:9092 --create --if-not-exists --topic charging-processed-events --partitions 1 --replication-factor 1
         kafka-topics --bootstrap-server kafka:9092 --create --if-not-exists --topic cancel-enrollment-commands --partitions 1 --replication-factor 1
 
-  otel-collector:
-    image: otel/opentelemetry-collector-contrib:latest
-    container_name: gymerp-otel-collector
-    command: ["--config=/etc/otelcol-contrib/config.yml"]
-    volumes:
-      - ./otel-collector-config.yml:/etc/otelcol-contrib/config.yml:ro
+  aspire-dashboard:
+    image: mcr.microsoft.com/dotnet/aspire-dashboard:latest
+    container_name: gymerp-aspire-dashboard
     ports:
-      - "4317:4317"
+      - "18888:18888"
+      - "4317:18889"
 
   gymerp:
     build:
@@ -90,7 +88,7 @@ services:
         condition: service_started
       kafka-init:
         condition: service_completed_successfully
-      otel-collector:
+      aspire-dashboard:
         condition: service_started
     ports:
       - "5035:5035"
@@ -99,7 +97,7 @@ services:
       ASPNETCORE_URLS: http://+:5035
 
       OpenTelemetry__Type: otlp
-      OpenTelemetry__Endpoint: http://otel-collector:4317
+      OpenTelemetry__Endpoint: http://aspire-dashboard:18889
 
       BasePath: ""
 
