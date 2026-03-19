@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Serilog;
 
 namespace GymErp.Common;
 
@@ -6,17 +7,54 @@ static class ServiceBusExtension
 {
     public static async Task DispatchDomainEventsAsync(this IServiceBus serviceBus, DbContext ctx)
     {
-        var domainEntities = ctx.ChangeTracker
-            .Entries<Aggregate>()
-            .Where(x => x.Entity.DomainEvents.Count != 0);
+        var logger = Log.ForContext("SourceContext", nameof(ServiceBusExtension));
 
-        var entityEntries = domainEntities.ToList();
-        
-        var domainEvents = entityEntries
-            .SelectMany(x => x.Entity.DomainEvents)
+        // EF Core não trata `Aggregate` (classe base) como entity type mapeada,
+        // então `Entries<Aggregate>()` pode retornar vazio.
+        // Por isso, percorremos todas as entidades rastreadas e filtramos as que herdam `Aggregate`.
+        var aggregateEntities = ctx.ChangeTracker
+            .Entries()
+            .Select(x => x.Entity)
+            .OfType<Aggregate>()
+            .Where(a => a.DomainEvents.Count != 0)
             .ToList();
-        entityEntries.ForEach(entity => entity.Entity.ClearDomainEvents());
+
+        var domainEvents = aggregateEntities
+            .SelectMany(a => a.DomainEvents)
+            .ToList();
+        aggregateEntities.ForEach(entity => entity.ClearDomainEvents());
         foreach (var domainEvent in domainEvents)
-            await serviceBus.PublishAsync(domainEvent);
+        {
+            var eventType = domainEvent.GetType().Name;
+            // #region agent log
+            DebugSessionLog.Write(
+                "E",
+                "ServiceBusExtension.DispatchDomainEventsAsync",
+                "PublishAsync before",
+                new Dictionary<string, object?> { ["eventType"] = eventType });
+            // #endregion
+
+            logger.Debug("Dispatching domain event {EventType}", eventType);
+            try
+            {
+                await serviceBus.PublishAsync(domainEvent);
+
+                // #region agent log
+                DebugSessionLog.Write(
+                    "E",
+                    "ServiceBusExtension.DispatchDomainEventsAsync",
+                    "PublishAsync after",
+                    new Dictionary<string, object?> { ["eventType"] = eventType });
+                // #endregion
+
+                logger.Debug("Domain event {EventType} published", eventType);
+            }
+            catch (Exception ex)
+            {
+                logger.Warning(ex, "Failed to publish domain event {EventType}", eventType);
+                throw;
+            }
+        }
+        
     }
 }

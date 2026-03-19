@@ -55,9 +55,9 @@ public sealed class SubscriptionsDbContext : DbContext
             await _serviceBus.DispatchDomainEventsAsync(this).ConfigureAwait(false);
             return result;
         }
-        catch (DbUpdateException e)
+        catch (DbUpdateException)
         {
-            throw new Exception();
+            throw;
         }
         catch (Exception)
         {

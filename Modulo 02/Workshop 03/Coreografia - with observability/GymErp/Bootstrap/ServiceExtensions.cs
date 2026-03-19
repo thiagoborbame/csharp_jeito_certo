@@ -1,6 +1,9 @@
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.OpenApi.Models;
 using Serilog;
+using Serilog.Enrichers.OpenTelemetry;
+using Serilog.Formatting.Compact;
+using Serilog.Sinks.OpenTelemetry;
 using OpenTelemetry;
 using OpenTelemetry.Exporter;
 using OpenTelemetry.Resources;
@@ -91,12 +94,27 @@ internal static class ServicesExtensions
         return services;
     }
 
-    public static IServiceCollection AddLogs(this IServiceCollection services, IConfiguration configuration)
+    public static IServiceCollection AddLogs(
+        this IServiceCollection services,
+        IConfiguration configuration,
+        string serviceName)
     {
         Log.Logger = new LoggerConfiguration()
             .ReadFrom.Configuration(configuration)
             .Enrich.FromLogContext()
             .Enrich.WithThreadId()
+            .Enrich.WithOpenTelemetrySpanId()
+            .Enrich.WithOpenTelemetryTraceId()
+            .Enrich.WithProperty("service_name", serviceName)
+            .WriteTo.OpenTelemetry(options =>
+            {
+                options.Endpoint = configuration["OpenTelemetry:Endpoint"] ?? "http://localhost:4317";
+                options.IncludedData = IncludedData.MessageTemplateTextAttribute |
+                                        IncludedData.TraceIdField |
+                                        IncludedData.SpanIdField;
+                options.Protocol = OtlpProtocol.Grpc;
+            })
+            .WriteTo.Console(new CompactJsonFormatter())
             .CreateLogger();
         services.AddSingleton(Log.Logger);
         return services;
@@ -146,6 +164,8 @@ internal static class ServicesExtensions
                     .AddSource(serviceName)
                     .AddSource("Silverback.Integration.Produce")
                     .AddSource("Silverback.Integration.Consume")
+                    .AddSource("Silverback.Integration.Sequence")
+                    .AddSource("Silverback.Core.Subscribers.InvokeSubscriber")
                     .AddAspNetCoreInstrumentation(opts =>
                     {
                         opts.EnrichWithHttpRequest = (activity, httpRequest) =>

@@ -8,14 +8,31 @@ public class Handler(ILogger<Handler> logger, IServiceBus serviceBus)
 {
     public async Task HandleAsync(EnrollmentCreatedEvent message, CancellationToken cancellationToken)
     {
-        logger.LogInformation("Hello World! Processing charging for enrollment {EnrollmentId}", message.EnrollmentId);
+        logger.LogDebug("ProcessCharging: starting for EnrollmentId {EnrollmentId}", message.EnrollmentId);
 
-        // Simular processamento assíncrono
-        await Task.Delay(100, cancellationToken);
+        try
+        {
+            logger.LogInformation(
+                "ProcessCharging: processing charging for enrollment {EnrollmentId}",
+                message.EnrollmentId);
 
-        logger.LogInformation("Charging processed successfully for enrollment {EnrollmentId}", message.EnrollmentId);
+            // Simular processamento assíncrono
+            await Task.Delay(100, cancellationToken);
 
-        await serviceBus.PublishAsync(new ChargingProcessedEvent(message.EnrollmentId));
+            logger.LogInformation(
+                "ProcessCharging: charging processed successfully for enrollment {EnrollmentId}",
+                message.EnrollmentId);
+
+            await serviceBus.PublishAsync(new ChargingProcessedEvent(message.EnrollmentId));
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(
+                ex,
+                "ProcessCharging: failed for enrollment {EnrollmentId}",
+                message.EnrollmentId);
+            throw;
+        }
     }
 }
 

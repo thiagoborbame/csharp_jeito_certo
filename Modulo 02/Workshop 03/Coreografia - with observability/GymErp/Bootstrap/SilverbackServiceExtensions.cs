@@ -36,6 +36,7 @@ internal static class SilverbackServiceExtensions
         var kafkaSection = configuration.GetSection("Kafka");
         var kafkaConfig = new KafkaConfig();
         kafkaConfig.Connection = kafkaSection.GetSection("Connection").Get<KafkaConnectionConfig>()!;
+
         services.AddSingleton(kafkaConfig);
 
         services

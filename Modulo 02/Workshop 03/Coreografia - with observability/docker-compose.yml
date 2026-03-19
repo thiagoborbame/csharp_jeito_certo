@@ -81,6 +81,8 @@ services:
       context: ./GymErp
       dockerfile: Dockerfile
     container_name: gymerp
+    volumes:
+      - ../../../.cursor:/.cursor
     depends_on:
       postgres:
         condition: service_started
@@ -95,6 +97,8 @@ services:
     environment:
       ASPNETCORE_ENVIRONMENT: Development
       ASPNETCORE_URLS: http://+:5035
+
+      Serilog__MinimumLevel__Default: "Debug"
 
       OpenTelemetry__Type: otlp
       OpenTelemetry__Endpoint: http://aspire-dashboard:18889
@@ -121,6 +125,8 @@ services:
       Kafka__Connection__SaslPassword: ""
       Kafka__Connection__EnableSslCertificateVerification: "false"
       Kafka__Connection__ClientId: GymErp
+
+      DEBUG_LOG_PATH: /.cursor/debug-7e6c31.log
 
 volumes:
   postgres-data:

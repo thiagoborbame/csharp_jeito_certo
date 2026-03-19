@@ -33,7 +33,7 @@ try
         .AddCors()
         .AddFastEndpoints()
         .AddAuthorization()
-        .AddLogs(builder.Configuration)
+        .AddLogs(builder.Configuration, serviceName)
         .AddTelemetry(serviceName, serviceVersion, builder.Configuration)
         .SwaggerDocument(c =>
         {
@@ -51,6 +51,7 @@ try
     builder.Host.ConfigureContainer<ContainerBuilder>(builder =>
     {
         builder.RegisterModule(new CommonModule());
+        builder.RegisterModule(new TenantModule());
         builder.RegisterModule(new AcessoModule());
         builder.RegisterModule(new SubscriptionsModule());
         builder.RegisterModule(new FinancialModule());
