@@ -15,7 +15,7 @@ public class Endpoint(Handler handler, ILogger<Endpoint> logger) : Endpoint<Requ
     {
         logger.LogInformation("AddNewEnrollment request received");
         logger.LogDebug(
-            "AddNewEnrollment request received with Name {Name} and Email {Email}",
+            "AddNewEnrollment request received with client.name {client.name} and client.email {client.email}",
             req.Name,
             req.Email);
 
@@ -27,8 +27,12 @@ public class Endpoint(Handler handler, ILogger<Endpoint> logger) : Endpoint<Requ
             return;
         }
 
-        logger.LogDebug("AddNewEnrollment succeeded for EnrollmentId {EnrollmentId}", result.Value);
+        logger.LogDebug(
+            "AddNewEnrollment succeeded for enrollment.id {enrollment.id}",
+            result.Value);
         await SendOkAsync(result.Value, ct);
-        logger.LogInformation("AddNewEnrollment completed for EnrollmentId {EnrollmentId}", result.Value);
+        logger.LogInformation(
+            "AddNewEnrollment completed for enrollment.id {enrollment.id}",
+            result.Value);
     }
 }

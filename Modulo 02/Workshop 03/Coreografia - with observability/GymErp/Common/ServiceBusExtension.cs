@@ -26,26 +26,11 @@ static class ServiceBusExtension
         foreach (var domainEvent in domainEvents)
         {
             var eventType = domainEvent.GetType().Name;
-            // #region agent log
-            DebugSessionLog.Write(
-                "E",
-                "ServiceBusExtension.DispatchDomainEventsAsync",
-                "PublishAsync before",
-                new Dictionary<string, object?> { ["eventType"] = eventType });
-            // #endregion
 
             logger.Debug("Dispatching domain event {EventType}", eventType);
             try
             {
                 await serviceBus.PublishAsync(domainEvent);
-
-                // #region agent log
-                DebugSessionLog.Write(
-                    "E",
-                    "ServiceBusExtension.DispatchDomainEventsAsync",
-                    "PublishAsync after",
-                    new Dictionary<string, object?> { ["eventType"] = eventType });
-                // #endregion
 
                 logger.Debug("Domain event {EventType} published", eventType);
             }

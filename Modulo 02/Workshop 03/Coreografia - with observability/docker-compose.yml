@@ -126,7 +126,7 @@ services:
       Kafka__Connection__EnableSslCertificateVerification: "false"
       Kafka__Connection__ClientId: GymErp
 
-      DEBUG_LOG_PATH: /.cursor/debug-7e6c31.log
+      DEBUG_LOG_PATH: /.cursor/debug-f52434.log
 
 volumes:
   postgres-data:

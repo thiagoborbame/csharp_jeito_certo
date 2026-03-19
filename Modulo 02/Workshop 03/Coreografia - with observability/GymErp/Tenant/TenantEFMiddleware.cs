@@ -13,6 +13,7 @@ public class TenantEfMiddleware(
     {
         await using var contexto = await factory.CriarAsync(tenantAccessor.Tenant.Name);
         accessor.Register(contexto);
+
         // Call the next delegate/middleware in the pipeline.
         await next(context);
         accessor.Clear();

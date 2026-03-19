@@ -15,7 +15,10 @@ public class TenantAccessorRegisterMiddleware(
             await next(context);
         else
         {
-            var tenant = await tenantLocator.Get(tenantHttpAccessor.Get(), context.RequestAborted);
+            var tenantKey = tenantHttpAccessor.Get();
+
+            var tenant = await tenantLocator.Get(tenantKey, context.RequestAborted);
+
             tenantAccessor.Register(tenant);
             // Call the next delegate/middleware in the pipeline.
             await next(context);

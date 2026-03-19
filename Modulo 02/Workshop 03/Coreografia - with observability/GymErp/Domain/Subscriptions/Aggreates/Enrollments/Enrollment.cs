@@ -31,7 +31,7 @@ public sealed class Enrollment : Aggregate
         if (validationResult.IsFailure)
             return Result.Failure<Enrollment>(validationResult.Error);
         var enrollment = new Enrollment(Guid.NewGuid(), client, DateTime.UtcNow, EState.Suspended);
-        enrollment.AddDomainEvent(new EnrollmentCreatedEvent(enrollment.Id));
+        enrollment.AddDomainEvent(new EnrollmentCreatedEvent(enrollment.Id, enrollment.Client.Cpf, enrollment.RequestDate));
         return enrollment;
     }
 

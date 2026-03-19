@@ -105,7 +105,6 @@ internal static class ServicesExtensions
             .Enrich.WithThreadId()
             .Enrich.WithOpenTelemetrySpanId()
             .Enrich.WithOpenTelemetryTraceId()
-            .Enrich.WithProperty("service_name", serviceName)
             .WriteTo.OpenTelemetry(options =>
             {
                 options.Endpoint = configuration["OpenTelemetry:Endpoint"] ?? "http://localhost:4317";
@@ -113,6 +112,10 @@ internal static class ServicesExtensions
                                         IncludedData.TraceIdField |
                                         IncludedData.SpanIdField;
                 options.Protocol = OtlpProtocol.Grpc;
+                options.ResourceAttributes = new Dictionary<string, object>
+                {
+                    ["service.name"] = serviceName
+                };
             })
             .WriteTo.Console(new CompactJsonFormatter())
             .CreateLogger();

@@ -1,4 +1,4 @@
-﻿using System.Security.Authentication;
+using System.Security.Authentication;
 using Dapper;
 using GymErp.Common;
 using Npgsql;
@@ -32,7 +32,7 @@ public class PostgresTenantLocatorStrategy(PostgresTenantStringConnection postgr
         
         if (gymErpTenant == null)
             throw new AuthenticationException($"Tenant not found [{identifier}]");
-            
+
         return gymErpTenant;
     }
 

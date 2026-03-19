@@ -8,11 +8,11 @@ public class AddPermissionToGreenListHandler(ILogger<AddPermissionToGreenListHan
     public Task HandleAsync(EnrollmentCreatedEvent message, CancellationToken cancellationToken)
     {
         logger.LogDebug(
-            "AddPermissionToGreenList: starting for EnrollmentId {EnrollmentId}",
+            "AddPermissionToGreenList: starting for enrollment.id {enrollment.id}",
             message.EnrollmentId);
 
         logger.LogInformation(
-            "AddPermissionToGreenList operation executed successfully for EnrollmentId {EnrollmentId}",
+            "AddPermissionToGreenList operation executed successfully for enrollment.id {enrollment.id}",
             message.EnrollmentId);
 
         return Task.CompletedTask;
