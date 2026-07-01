@@ -5,16 +5,6 @@ Repositório de exemplos e workshops do curso **C# Jeito Certo**, com foco em bo
 ---
 
 ## Objetivo do repositório
-
-- Servir como material de apoio e referência dos conceitos abordados no curso.
-- Oferecer projetos práticos que ilustram diferentes estilos de arquitetura (em camadas, Clean Architecture, Ports and Adapters, Vertical Slice).
-- Demonstrar padrões de integração entre serviços: orquestração síncrona e coreografia com mensageria (Kafka, RabbitMQ), incluindo padrão Outbox.
-- Contrastar abordagens que aumentam o custo de manutenção com alternativas mais sustentáveis (ex.: controller-based vs vertical slice).
-
-Os exemplos usam domínios como **FinanceManager** (contas, transações, orçamento) e **GymErp** (matrículas, assinaturas, financeiro) para manter o contexto didático consistente.
-
----
-
 ## Estrutura dos projetos
 
 ### Módulo 01
